@@ -1,19 +1,16 @@
 package furhatos.app.furhatlab.flow.fruitseller
-
-import furhatos.app.furhatlab.flow.Idle
-import furhatos.app.furhatlab.flow.StartInteraction
 import furhatos.app.furhatlab.flow.chat.ChatState
+import furhatos.app.furhatlab.flow.Idle
+import furhatos.app.furhatlab.flow.chat.responseGenerator
 import furhatos.flow.kotlin.*
-import furhatos.gestures.Gestures
 import furhatos.nlu.EnumEntity
 import furhatos.nlu.Intent
 import furhatos.nlu.common.No
 import furhatos.nlu.common.RequestRepeat
 import furhatos.nlu.common.Yes
-import furhatos.records.Location
 import furhatos.records.User
 import furhatos.util.Language
-
+import furhatos.gestures.Gestures
 /**
  * This is the top parent state which all other states inherit
  */
@@ -27,6 +24,26 @@ val Interaction: State = state(ChatState) {
         reentry()
     }
 
+    onResponse {
+        //furhat.say("I am not sure I understand that")
+        //reentry()
+
+        val furhatResponse = responseGenerator.generate(this)
+        furhat.say(furhatResponse)
+        reentry()
+    }
+
+    onNoResponse {
+        furhat.say("I didn't hear anything")
+        reentry()
+    }
+    onUserEnter(){
+        furhat.attend(it)
+        furhat.say(text = "I will be with you shortly")
+        furhat.attend(users.other)
+        reentry()
+
+    }
 }
 
 /**
@@ -35,58 +52,44 @@ val Interaction: State = state(ChatState) {
 val FruitSellerGreeting: State = state(Interaction) {
 
     onEntry {
-        val greeting = utterance {
-            +"Hi there!"
-            +"We are going to play Guess Who?"
-            +"Lets' start the game."
-        }
-        furhat.say(greeting)
-        furhat.gesture(Gestures.BigSmile(duration=4.0))
-        goto(StartGame)
+        furhat.gesture(Gestures.Smile)
+        furhat.say("Hi there!")
+        goto(TakingOrder)
     }
 
-    onUserEnter() {
-        val newUser = it
-        val currentUser = users.current
-        furhat.attend(newUser)
-        furhat.say("I will help you soon.")
-        furhat.attend(currentUser)
-        reentry()
-    }
 
 }
 
-val StartGame: State = state(Interaction) {
+val TakingOrder: State = state(Interaction) {
+
+    onEntry {
+        furhat.ask("Would you like to buy some fruit?")
+    }
 
     onResponse<BuyFruit> {
-        val response = listOf("Your current order is ", "You currently have ")
         val fruit = it.intent.fruit!!.value!!
         furhat.say("Alright, $fruit it is.")
         users.current.order.fruits.add(fruit)
-        furhat.say( response.random() + users.current.order.summarize())
+        furhat.say("Your current order is ${users.current.order.summarize()}")
         goto(AnythingElse)
     }
 
-    onResponse<Question> {
-        furhat.say("Ah, we have " + PeopleToChooseFrom().getEnum(Language.ENGLISH_US).joinToString(", "))
-    }
-
     onResponse<Yes> {
-        furhat.say("Yes")
-        // furhat.ask("So, what fruit do you want?")
+        furhat.ask("So, what fruit do you want?")
     }
 
     onResponse<No> {
-        furhat.say("No")
-        // when {
-        //     users.current.order.fruits.isEmpty() -> {
-        //         goto(Goodbye)
-        //     }
-        //     else -> goto(Confirmation)
-        // }
+        goto( state = Confirm)
+        goto(Goodbye)
+    }
+    onResponse<askFruit>{
+        furhat.say(text = "banana, orange, apple, pineapple and pear")
+        furhat.ask("So, what fruit do you want?")
+
     }
 
 }
+
 /**
  * Note: we are inheriting all triggers from TakingOrder
  */
@@ -96,31 +99,29 @@ val AnythingElse: State = state(TakingOrder) {
         furhat.ask("Anything else?")
     }
 
+
 }
 
-
-val Confirmation: State = state(TakingOrder) {
-
+val Confirm: State = state(parent = TakingOrder){
     onEntry {
-        furhat.ask("Okay, so you want to order ${users.current.order.summarize()}?")
-    }
+        furhat.ask(text = "Is this what you want?")
 
+    }
     onResponse<Yes> {
-        goto(Goodbye)
+        furhat.say(text = "Confirmed list")
+        goto(state = Goodbye)
     }
-
     onResponse<No> {
-        users.current.order.fruits.clear()
-        goto(TakingOrder)
+        goto(state = TakingOrder)
     }
-
 }
 
 val Goodbye: State = state(Interaction) {
 
     onEntry {
-        furhat.say("Thank you for playing, that was fun!")
-        furhat.gesture(Gestures.Wink(duration=2.0))
+        furhat.gesture(Gestures.ExpressSad)
+
+        furhat.say("Alright, it was nice talking to you")
         goto(Idle)
     }
 
@@ -129,17 +130,21 @@ val Goodbye: State = state(Interaction) {
 
 /*** NLU: INTENTS AND ENTITIES **/
 
-// class BuyFruit(val fruit : Fruit? = null) : Intent() {
-//     override fun getExamples(lang: Language) = listOf("I want Bananas", "can I have some a banana", "banana")
-// }
+class BuyFruit(val fruit : Fruit? = null) : Intent() {
 
-class PeopleToChooseFrom : EnumEntity() {
-    override fun getEnum(lang: Language) = listOf("Rihanna", "Drake", "Ed Sheeran", "Justin Bieber", "Taylor Swift", "Ronaldo", "Donald Trump")
+    override fun getExamples(lang: Language) = listOf("I would like to buy an orange", "can I have some a banana", "banana")
+
 }
+class askFruit: Intent(){
+    override fun getExamples(lang: Language) = listOf(
+        "What fruits do you have",
+        "What do you have"
+    )
+}
+class Fruit : EnumEntity() {
+    override fun getEnum(lang: Language) = listOf("banana", "orange", "apple", "pineapple", "pear")
 
-// class Question() : Intent() {
-//     override fun getExamples(lang: Language) = listOf("What fruits do you have?", "What fruits are you selling?")
-// }
+}
 
 /** KEEPING TRACK OF CURRENT ORDER **/
 
