@@ -14,9 +14,14 @@ import furhatos.nlu.common.Yes
 import furhatos.records.Location
 import furhatos.records.User
 import furhatos.util.Language
+import io.github.cdimascio.dotenv.Dotenv
 
-val model = OpenAIChatCompletionModel(serviceKey = "")
-//glöm inte ta bort key innan vi pushar main!!
+val dotenv = Dotenv.load()
+
+val apiKey = dotenv["OPENAI_API_KEY"]
+    ?: throw IllegalStateException("OPENAI_API_KEY missing in .env file")
+
+val model = OpenAIChatCompletionModel(serviceKey = apiKey)
 
 val listOfPeople = listOf("Rihanna", "Drake", "Ed Sheeran", "Justin Bieber", "Taylor Swift",
     "Christiano Ronaldo", "Donald Trump");
