@@ -1,0 +1,74 @@
+# -----------------------------
+#  ENVIRONMENT VARIABLES
+# -----------------------------
+.env
+*.env
+.env.*
+!*.env.example    # keep example templates
+
+# -----------------------------
+#  GRADLE
+# -----------------------------
+.gradle/
+build/
+out/
+
+# Ignore Gradle GUI files
+gradle-app.setting
+
+# Local Gradle config
+gradle.properties
+
+# Wrapper JAR (optional)
+# gradle/wrapper/gradle-wrapper.jar
+
+# -----------------------------
+#  KOTLIN / JVM
+# -----------------------------
+*.class
+*.kt~
+*.kts~
+*.log
+
+# -----------------------------
+#  INTELLIJ /  PROBLEM REPORTS
+# -----------------------------
+problems.report.html
+reports/
+*.report.html
+
+# -----------------------------
+#  INTELLIJ / ANDROID STUDIO
+# -----------------------------
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# IntelliJ build directory
+out/
+
+# JetBrains caches
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries
+.idea/**/shelf/
+
+# -----------------------------
+#  SYSTEM FILES
+# -----------------------------
+.DS_Store
+Thumbs.db
+
+# -----------------------------
+#  LOG FILES
+# -----------------------------
+*.log
+
+# -----------------------------
+#  OTHER
+# -----------------------------
+*.tmp
+*.swp
+*.swo
