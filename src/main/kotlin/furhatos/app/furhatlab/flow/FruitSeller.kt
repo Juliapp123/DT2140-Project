@@ -37,11 +37,12 @@ val FruitSellerGreeting: State = state(Interaction) {
     onEntry {
         val greeting = utterance {
             +"Hi there!"
-            +"Welcome to the furhat fruit shop"
+            +"We are going to play Guess Who?"
+            +"Lets' start the game."
         }
         furhat.say(greeting)
         furhat.gesture(Gestures.BigSmile(duration=4.0))
-        goto(TakingOrder)
+        goto(StartGame)
     }
 
     onUserEnter() {
@@ -55,11 +56,7 @@ val FruitSellerGreeting: State = state(Interaction) {
 
 }
 
-val TakingOrder: State = state(Interaction) {
-
-    onEntry {
-        furhat.ask("Would you like to buy some fruit?")
-    }
+val StartGame: State = state(Interaction) {
 
     onResponse<BuyFruit> {
         val response = listOf("Your current order is ", "You currently have ")
@@ -71,24 +68,25 @@ val TakingOrder: State = state(Interaction) {
     }
 
     onResponse<Question> {
-        furhat.say("Ah, we have " + Fruit().getEnum(Language.ENGLISH_US).joinToString(", "))
+        furhat.say("Ah, we have " + PeopleToChooseFrom().getEnum(Language.ENGLISH_US).joinToString(", "))
     }
 
     onResponse<Yes> {
-        furhat.ask("So, what fruit do you want?")
+        furhat.say("Yes")
+        // furhat.ask("So, what fruit do you want?")
     }
 
     onResponse<No> {
-        when {
-            users.current.order.fruits.isEmpty() -> {
-                goto(Goodbye)
-            }
-            else -> goto(Confirmation)
-        }
+        furhat.say("No")
+        // when {
+        //     users.current.order.fruits.isEmpty() -> {
+        //         goto(Goodbye)
+        //     }
+        //     else -> goto(Confirmation)
+        // }
     }
 
 }
-
 /**
  * Note: we are inheriting all triggers from TakingOrder
  */
@@ -121,7 +119,7 @@ val Confirmation: State = state(TakingOrder) {
 val Goodbye: State = state(Interaction) {
 
     onEntry {
-        furhat.say("Alright, it was nice talking to you")
+        furhat.say("Thank you for playing, that was fun!")
         furhat.gesture(Gestures.Wink(duration=2.0))
         goto(Idle)
     }
@@ -131,20 +129,17 @@ val Goodbye: State = state(Interaction) {
 
 /*** NLU: INTENTS AND ENTITIES **/
 
-class BuyFruit(val fruit : Fruit? = null) : Intent() {
+// class BuyFruit(val fruit : Fruit? = null) : Intent() {
+//     override fun getExamples(lang: Language) = listOf("I want Bananas", "can I have some a banana", "banana")
+// }
 
-    override fun getExamples(lang: Language) = listOf("I would like to buy an orange", "can I have some a banana", "banana")
-
+class PeopleToChooseFrom : EnumEntity() {
+    override fun getEnum(lang: Language) = listOf("Rihanna", "Drake", "Ed Sheeran", "Justin Bieber", "Taylor Swift", "Ronaldo", "Donald Trump")
 }
 
-class Fruit : EnumEntity() {
-    override fun getEnum(lang: Language) = listOf("banana", "orange", "apple", "pineapple", "pear")
-
-}
-
-class Question() : Intent() {
-    override fun getExamples(lang: Language) = listOf("What fruits do you have?", "What fruits are you selling?")
-}
+// class Question() : Intent() {
+//     override fun getExamples(lang: Language) = listOf("What fruits do you have?", "What fruits are you selling?")
+// }
 
 /** KEEPING TRACK OF CURRENT ORDER **/
 
