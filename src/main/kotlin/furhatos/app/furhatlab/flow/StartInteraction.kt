@@ -9,8 +9,8 @@ import furhatos.flow.kotlin.state
 val StartInteraction: State = state {
     onEntry {
         //goto(FruitSellerGreeting)
-        goto(GestureState)
-        //goto(ChatState)
+        //goto(GestureState)
+        goto(ChatState)
     }
 
 }

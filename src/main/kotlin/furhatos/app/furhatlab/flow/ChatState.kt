@@ -4,16 +4,10 @@ import furhatos.app.furhatlab.flow.Idle
 import furhatos.app.furhatlab.llm.OpenAIChatCompletionModel
 import furhatos.app.furhatlab.llm.ResponseGenerator
 import furhatos.flow.kotlin.*
-import furhatos.nlu.common.Goodbye
-import furhatos.gestures.Gestures
 import furhatos.nlu.EnumEntity
 import furhatos.nlu.Intent
-import furhatos.nlu.common.No
-import furhatos.nlu.common.RequestRepeat
-import furhatos.nlu.common.Yes
-import furhatos.records.Location
-import furhatos.records.User
 import furhatos.util.Language
+import furhatos.flow.kotlin.Audio
 
 val model = OpenAIChatCompletionModel(serviceKey = "")
 //glöm inte ta bort key innan vi pushar main!!
@@ -23,8 +17,30 @@ val listOfPeople = listOf("Rihanna", "Drake", "Ed Sheeran", "Justin Bieber", "Ta
 var chosenPerson = listOfPeople.random();
 
 val responseGenerator = ResponseGenerator(
-    systemPrompt = "You are a social robot who plays the game Guess Who. You are the one thinking of a person. The user will ask yes-or-no-questions about which person it is that you have selected. You only answer yes or no, unless it isn't a yes-or-no-quetion, in which case you explain that you can only answer yes-or-no-questions. Do not end the sentence with a question." +
-            "The person you have chosen is " + chosenPerson,
+    systemPrompt = """
+        You are a social robot who plays the game Guess Who.
+        The person you have chosen is: $chosenPerson.
+        
+        The user will ask yes-or-no questions to guess who it is.
+        
+        Your job is to:
+        1) Decide if the correct answer is YES, NO, or INVALID.
+           - INVALID = it is not a yes/no question or you cannot answer it as yes/no.
+        2) Judge how good the question is for the game by choosing a strength:
+           - STRONG  = very good, highly informative question
+           - GOOD    = helpful question
+           - MINIMAL = only a little helpful
+           - HESITANT = vague/unclear/almost good
+           - MISC    = wrong type of question or other meta feedback
+        
+        IMPORTANT:
+        - Do NOT write full sentences.
+        - Always answer with exactly: ANSWER|STRENGTH
+          Examples:
+          YES|STRONG
+          NO|GOOD
+          INVALID|MISC
+    """.trimIndent(),
     model = model
 )
 
@@ -41,8 +57,7 @@ val ChatState = state {
         }
         furhat.say(greeting)
         //TEST avkommentera för testing
-        //furhat.say(chosenPerson)
-        furhat.gesture(Gestures.BigSmile(duration=4.0))
+        furhat.say(chosenPerson)
         reentry()
     }
 
@@ -57,7 +72,6 @@ val ChatState = state {
             furhat.say("Okay, see you another time.")
         }
         furhat.say("The person I was thinking of was " + chosenPerson)
-        furhat.gesture(Gestures.Wink(duration=2.0))
         goto(Idle)
     }
 
@@ -85,8 +99,30 @@ val ChatState = state {
     }
 
     onResponse {
-        val furhatResponse = responseGenerator.generate(this)
-        furhat.say(furhatResponse)
+        val raw = responseGenerator.generate(this)
+        val parts = raw.split("|", limit = 2)
+
+        val answerTag = parts.getOrNull(0)?.trim()
+        val strengthTag = parts.getOrNull(1)?.trim()
+
+        val answerType = when (answerTag) {
+            "YES" -> AnswerType.YES
+            "NO"  -> AnswerType.NO
+            else  -> AnswerType.INVALID
+        }
+
+        val strength = try {
+            strengthTag?.let { ResponseStrength.valueOf(it) } ?: ResponseStrength.MISC
+        } catch (e: IllegalArgumentException) {
+            ResponseStrength.MISC
+        }
+
+        val prosody = utterance {
+            + chooseProsody(answerType, strength)
+        }
+
+        // speech-only feedback
+        furhat.say(prosody)
         numberOfQuestions++
         reentry()
     }
@@ -114,16 +150,48 @@ class EndGame() : Intent(){
     override fun getExamples(lang: Language) = listOf("I do not want to play anymore", "End the game", "I give up", "Goodbye")
 }
 
-enum class ResponseStrength{
-    GOOD, STRONG, HESITANT, MINIMAl, MISC
+enum class AnswerType {
+    YES, NO, INVALID
 }
-/*
-fun GestureChooser(responseStrength: ResponseStrength) : Gesture {
-    return when (responseStrength) {
-        ResponseStrength.GOOD -> Gestures.BigSmile(duration=2.0)
-        ResponseStrength.STRONG -> Gestures.Smile(duration=2.0)
-        ResponseStrength.HESITANT -> Gestures.BrowFrown(duration=2.0)
-        ResponseStrength.MINIMAl -> Gestures.Nod(duration=1.0)
-        ResponseStrength.MISC -> Gestures.Shake(duration = 2.0)
+
+enum class ResponseStrength {
+    GOOD, STRONG, HESITANT, MINIMAL, MISC
+}
+
+fun chooseProsody(answer: AnswerType, strength: ResponseStrength): Audio {
+
+    return when (answer) {
+        AnswerType.YES -> when (strength) {
+            ResponseStrength.STRONG ->  Audio("classpath:sound/yesyesyes.wav", "YES YES YES!!")
+
+            ResponseStrength.GOOD -> Audio("classpath:sound/yes.wav", "Yes")
+
+            ResponseStrength.HESITANT -> Audio("classpath:sound/hmmmyes.wav", "Hmmm... yes?")
+
+            ResponseStrength.MINIMAL -> Audio("classpath:sound/mhm.wav", "Mhm.")
+
+            ResponseStrength.MISC -> Audio("classpath:sound/yes.wav", "Yes")
+        }
+
+        AnswerType.NO -> when (strength) {
+            ResponseStrength.STRONG -> Audio("classpath:sound/absolutelynot.wav", "Absolutely NOT!")
+
+            ResponseStrength.GOOD -> Audio("classpath:sound/no.wav", "No")
+
+            ResponseStrength.HESITANT -> Audio("classpath:sound/hmmmno.wav", "Hmmm... no?")
+
+            ResponseStrength.MINIMAL -> Audio("classpath:sound/mm-mm(no).wav", "Mm-mm")
+
+            ResponseStrength.MISC -> Audio("classpath:sound/no.wav", "No")
+        }
+
+        // wrong type of question etc.
+        AnswerType.INVALID -> when (strength) {
+            ResponseStrength.STRONG -> Audio("classpath:sound/no.wav", "No")
+            ResponseStrength.GOOD -> Audio("classpath:sound/no.wav", "No")
+             ResponseStrength.MISC -> Audio("classpath:sound/no.wav", "No")//-> "That's not a yes or no question"
+            ResponseStrength.HESITANT -> Audio("classpath:sound/no.wav", "No") //-> "Hmm, I can't really answer that with yes or no"
+            ResponseStrength.MINIMAL -> Audio("classpath:sound/no.wav", "No") //-> "Hmm..."
+        }
     }
-} */
+}
