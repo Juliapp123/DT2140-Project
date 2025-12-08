@@ -12,8 +12,22 @@ import furhatos.flow.kotlin.Audio
 val model = OpenAIChatCompletionModel(serviceKey = "")
 //glöm inte ta bort key innan vi pushar main!!
 
-val listOfPeople = listOf("Rihanna", "Drake", "Ed Sheeran", "Justin Bieber", "Taylor Swift",
-    "Christiano Ronaldo", "Donald Trump");
+val listOfPeople = listOf(  "Rihanna",
+                            "Drake",
+                            "Ed Sheeran",
+                            "Justin Bieber",
+                            "Taylor Swift",
+                            "Christiano Ronaldo",
+                            "Donald Trump",
+                            "Kim Kardashian",
+                            "Barack Obama",
+                            "Ariana Grande",
+                            "Lionel Messi",
+                            "Emma Watson",
+                            "Gordon Ramsay",
+                            "Angelina Jolie",
+                            "Dolly Parton",
+                        );
 var chosenPerson = listOfPeople.random();
 
 val responseGenerator = ResponseGenerator(
@@ -57,7 +71,7 @@ val ChatState = state {
         }
         furhat.say(greeting)
         //TEST avkommentera för testing
-        furhat.say(chosenPerson)
+        //furhat.say(chosenPerson)
         reentry()
     }
 
@@ -143,7 +157,7 @@ class PeopleToChooseFrom : EnumEntity() {
 }
 
 class GuessPerson(val person : PeopleToChooseFrom? = null) : Intent() {
-    override fun getExamples(lang: Language) = listOf("Is it Rihanna?", "Is the person Rihanna?", "Rihanna?")
+    override fun getExamples(lang: Language) = listOf("Is it $chosenPerson?", "Is the person $chosenPerson", "$chosenPerson?",)
 }
 
 class EndGame() : Intent(){
@@ -181,7 +195,7 @@ fun chooseProsody(answer: AnswerType, strength: ResponseStrength): Audio {
         AnswerType.INVALID -> when (strength) {
             ResponseStrength.STRONG -> Audio("classpath:sound/cantanswer.wav", "I can't really answer that.")
             ResponseStrength.GOOD -> Audio("classpath:sound/cantanswer.wav", "I can't really answer that.")
-             ResponseStrength.MISC -> Audio("classpath:sound/notyesno.wav", "That's not a yes or no question")
+            ResponseStrength.MISC -> Audio("classpath:sound/notyesno.wav", "That's not a yes or no question")
             ResponseStrength.HESITANT -> Audio("classpath:sound/dontknow.wav", "I don't know..")
             ResponseStrength.MINIMAL -> Audio("classpath:sound/hmmm.wav", "Hmmmm...")
         }
