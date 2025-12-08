@@ -37,7 +37,7 @@ val g_responseGenerator = ResponseGenerator(
         Your job is to:
         1) Decide if the correct answer is YES, NO, or INVALID.
            - INVALID = it is not a yes/no question or you cannot answer it as yes/no.
-        2) Judge how good the question is for the game:
+        2) Judge how good the question is for the game by choosing a strength:
            - STRONG  = very good, highly informative question
            - GOOD    = helpful question
            - MINIMAL = only a little helpful
@@ -61,15 +61,15 @@ val GestureState = state {
     var hasGuessedCorrectly = false;
 
     onEntry {
-      /*  val greeting = utterance {
-            +"Hi there!"
-            +"We are going to play Guess Who?"
-            +"Lets' start the game."
-        }
-        furhat.say(greeting) */
+        /*  val greeting = utterance {
+              +"Hi there!"
+              +"We are going to play Guess Who?"
+              +"Lets' start the game."
+          }
+          furhat.say(greeting) */
         //TEST avkommentera för testing
         //furhat.say(chosenPerson)
-        
+
         furhat.gesture(Gestures.BigSmile(duration=4.0))
         furhat.gesture(Gestures.Nod(duration = 1.0))
         reentry()
@@ -80,12 +80,12 @@ val GestureState = state {
     }
 
     onResponse<g_EndGame> {
-       /* if(numberOfQuestions > 3) {
-            furhat.say("Thank you for playing, that was fun!")
-        } else {
-            furhat.say("Okay, see you another time.")
-        }
-        furhat.say("The person I was thinking of was " + g_chosenPerson) */
+        /* if(numberOfQuestions > 3) {
+             furhat.say("Thank you for playing, that was fun!")
+         } else {
+             furhat.say("Okay, see you another time.")
+         }
+         furhat.say("The person I was thinking of was " + g_chosenPerson) */
         furhat.gesture(Gestures.Wink(duration=2.0))
         goto(Idle)
     }
@@ -139,7 +139,15 @@ val GestureState = state {
         }
 
         // gesture-only feedback
-        furhat.gesture(g_chooseGesture(answerType, strength))
+        // furhat.gesture(g_chooseGesture(answerType, strength))
+        // Changed to list based gestures for multiple at the same time
+        //furhat.gaze(Away)
+        //delay(2000)
+        //furhat.gaze(users.current)
+        // if (answerType == INVALID) // Lägga till om INVALID att den kollar bort under hela gesturen
+        new_g_chooseGestures(answerType, strength).forEach { gesture ->
+            furhat.gesture(gesture)
+        }
         numberOfQuestions++
         reentry()
     }
@@ -178,6 +186,7 @@ enum class g_ResponseStrength {
 
 fun g_chooseGesture(answer: g_AnswerType, strength: g_ResponseStrength): Gesture {
     return when (answer) {
+        // Finns parameter "strength" använda den för olika strengths + duration parameter eller olika gestures?
         g_AnswerType.YES -> when (strength) {
             g_ResponseStrength.STRONG   -> Gestures.BigSmile(duration = 2.0)     // strong yes
             g_ResponseStrength.GOOD     -> Gestures.Smile(duration = 1.5)        // clear yes
@@ -201,6 +210,80 @@ fun g_chooseGesture(answer: g_AnswerType, strength: g_ResponseStrength): Gesture
             g_ResponseStrength.MISC     -> Gestures.BrowFrown(duration = 1.0)    // “wrong question”
             g_ResponseStrength.HESITANT -> Gestures.BrowFrown(duration = 0.8)
             g_ResponseStrength.MINIMAL  -> Gestures.BrowFrown(duration = 0.8)
+        }
+    }
+}
+
+fun new_g_chooseGestures(answer: g_AnswerType, strength: g_ResponseStrength): List<Gesture> {
+    return when (answer) {
+        g_AnswerType.YES -> when (strength) {
+            // Strong yes
+            g_ResponseStrength.STRONG   -> listOf(
+                Gestures.BigSmile(duration = 2.0),
+                Gestures.Nod(duration = 1.2, strength = 1.5)
+            )
+            // Clear yes
+            g_ResponseStrength.GOOD     -> listOf(
+                Gestures.Smile(duration = 1.5),
+                Gestures.Nod(duration = 0.8, strength = 1.0)
+            )
+            // Uncertain yes
+            g_ResponseStrength.HESITANT -> listOf(
+                Gestures.Thoughtful(duration = 1.5),
+                Gestures.Nod(duration = 0.8, strength = 0.5)
+            )
+            // Weak yes
+            g_ResponseStrength.MINIMAL  -> listOf(
+                Gestures.Smile(duration = 1.2, strength = 0.6),
+                Gestures.Nod(duration = 0.6, strength = 0.5)
+            )
+            g_ResponseStrength.MISC     -> listOf(
+                Gestures.Thoughtful(duration = 1.0, strength = 1.5)
+            )
+        }
+
+        g_AnswerType.NO -> when (strength) {
+            // Strong no
+            g_ResponseStrength.STRONG   -> listOf(
+                Gestures.BrowFrown(duration = 2.0),
+                Gestures.Shake(duration = 1.2, strength = 1.5)
+            )
+            // Clear no
+            g_ResponseStrength.GOOD     -> listOf(
+                Gestures.BrowFrown(duration = 1.5),
+                Gestures.Shake(duration = 0.8, strength = 1.0)
+            )
+            // Uncertain no
+            g_ResponseStrength.HESITANT -> listOf(
+                Gestures.Thoughtful(duration = 1.5),
+                Gestures.Shake(duration = 0.8, strength = 0.5)
+            )
+            // Weak no
+            g_ResponseStrength.MINIMAL  -> listOf(
+                Gestures.BrowFrown(duration = 1.2, strength = 0.6),
+                Gestures.Shake(duration = 0.6, strength = 0.5)
+            )
+            g_ResponseStrength.MISC     -> listOf(
+                Gestures.Thoughtful(duration = 1.0, strength = 1.5)
+            )
+        }
+
+        // wrong type of question etc.
+        g_AnswerType.INVALID -> when (strength) {
+            g_ResponseStrength.STRONG,
+            g_ResponseStrength.GOOD,
+            g_ResponseStrength.MISC     -> listOf(
+                Gestures.BrowFrown(duration = 1.0, strength = 0.6),
+                Gestures.Thoughtful(duration = 1.0, strength = 1.5)
+            )
+            g_ResponseStrength.HESITANT -> listOf(
+                Gestures.BrowFrown(duration = 1.0, strength = 0.6),
+                Gestures.Thoughtful(duration = 1.0, strength = 1.5)
+            )
+            g_ResponseStrength.MINIMAL  -> listOf(
+                Gestures.BrowFrown(duration = 1.0, strength = 0.6),
+                Gestures.Thoughtful(duration = 1.0, strength = 1.5)
+            )
         }
     }
 }
