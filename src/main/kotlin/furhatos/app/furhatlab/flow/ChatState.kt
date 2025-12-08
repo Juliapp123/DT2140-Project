@@ -163,35 +163,27 @@ fun chooseProsody(answer: AnswerType, strength: ResponseStrength): Audio {
     return when (answer) {
         AnswerType.YES -> when (strength) {
             ResponseStrength.STRONG ->  Audio("classpath:sound/yesyesyes.wav", "YES YES YES!!")
-
             ResponseStrength.GOOD -> Audio("classpath:sound/yes.wav", "Yes")
-
             ResponseStrength.HESITANT -> Audio("classpath:sound/hmmmyes.wav", "Hmmm... yes?")
-
             ResponseStrength.MINIMAL -> Audio("classpath:sound/mhm.wav", "Mhm.")
-
             ResponseStrength.MISC -> Audio("classpath:sound/yes.wav", "Yes")
         }
 
         AnswerType.NO -> when (strength) {
             ResponseStrength.STRONG -> Audio("classpath:sound/absolutelynot.wav", "Absolutely NOT!")
-
             ResponseStrength.GOOD -> Audio("classpath:sound/no.wav", "No")
-
             ResponseStrength.HESITANT -> Audio("classpath:sound/hmmmno.wav", "Hmmm... no?")
-
             ResponseStrength.MINIMAL -> Audio("classpath:sound/mm-mm(no).wav", "Mm-mm")
-
             ResponseStrength.MISC -> Audio("classpath:sound/no.wav", "No")
         }
 
         // wrong type of question etc.
         AnswerType.INVALID -> when (strength) {
-            ResponseStrength.STRONG -> Audio("classpath:sound/no.wav", "No")
-            ResponseStrength.GOOD -> Audio("classpath:sound/no.wav", "No")
-             ResponseStrength.MISC -> Audio("classpath:sound/no.wav", "No")//-> "That's not a yes or no question"
-            ResponseStrength.HESITANT -> Audio("classpath:sound/no.wav", "No") //-> "Hmm, I can't really answer that with yes or no"
-            ResponseStrength.MINIMAL -> Audio("classpath:sound/no.wav", "No") //-> "Hmm..."
+            ResponseStrength.STRONG -> Audio("classpath:sound/cantanswer.wav", "I can't really answer that.")
+            ResponseStrength.GOOD -> Audio("classpath:sound/cantanswer.wav", "I can't really answer that.")
+             ResponseStrength.MISC -> Audio("classpath:sound/notyesno.wav", "That's not a yes or no question")
+            ResponseStrength.HESITANT -> Audio("classpath:sound/dontknow.wav", "I don't know..")
+            ResponseStrength.MINIMAL -> Audio("classpath:sound/hmmm.wav", "Hmmmm...")
         }
     }
 }
