@@ -20,9 +20,26 @@ import furhatos.flow.kotlin.Audio
 val c_model = OpenAIChatCompletionModel(serviceKey = "")
 //glöm inte ta bort key innan vi pushar main!!
 
-val c_listOfPeople = listOf("Rihanna", "Drake", "Ed Sheeran", "Justin Bieber", "Taylor Swift",
-    "Christiano Ronaldo", "Donald Trump");
-var c_chosenPerson = "Rihanna"// g_listOfPeople.random();
+val c_listOfPeople = listOf(  "Rihanna",
+    "Drake",
+    "Ed Sheeran",
+    "Justin Bieber",
+    "Taylor Swift",
+    "Christiano Ronaldo",
+    "Donald Trump",
+    "Kim Kardashian",
+    "Barack Obama",
+    "Ariana Grande",
+    "Lionel Messi",
+    "Emma Watson",
+    "Gordon Ramsay",
+    "Angelina Jolie",
+    "Dolly Parton",
+    "Leonardo Dicaprio",
+    "Queen Elizabeth",
+    "Usain Bolt"
+);
+var c_chosenPerson = g_listOfPeople.random();
 
 val c_responseGenerator = ResponseGenerator(
     /*systemPrompt = "You are a social robot who plays the game Guess Who. You are the one thinking of a person. The user will ask yes-or-no-questions about which person it is that you have selected. You only answer yes or no, unless it isn't a yes-or-no-quetion, in which case you explain that you can only answer yes-or-no-questions. Do not end the sentence with a question." +

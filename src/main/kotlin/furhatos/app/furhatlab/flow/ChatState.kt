@@ -27,7 +27,11 @@ val listOfPeople = listOf(  "Rihanna",
                             "Gordon Ramsay",
                             "Angelina Jolie",
                             "Dolly Parton",
+                            "Leonardo Dicaprio",
+                            "Queen Elizabeth",
+                            "Usain Bolt"
                         );
+
 var chosenPerson = listOfPeople.random();
 
 val responseGenerator = ResponseGenerator(
